@@ -1,0 +1,157 @@
+/**
+ * hashTable.c
+ *
+ * This is the implementation file for the interfaces found in hashTable.h.
+ * This file implements the hashTable Abstract Data Type.
+ * Specifically, it implements the hashTable struct, and the functions declared
+ * in the hashTable.h file
+ */
+#include "hashTable.h"
+#include <stdlib.h>
+#include <stdbool.h>
+#include<string.h>
+
+#define BUCKET_COUNT 1024
+
+struct Binding{
+
+  const char *key;
+  int value;
+  struct Binding *next;
+
+};
+
+struct HashTable{
+
+  struct Binding *buckets[BUCKET_COUNT];
+
+};
+
+//This function creates and initialize a HashTable and return it.
+HashTable *create(){
+  HashTable *hashTable = (HashTable*) malloc(sizeof(HashTable));
+   return hashTable;
+
+}
+
+//This function hashes the key and returns an integer mod BUCKET_COUNT
+unsigned int hash(const char *key){
+  enum {HUSH_MULT = 65599};
+  unsigned int i;
+  unsigned int h = 1;
+  for(i = 0; key[i] != '\0';i++)
+    h = h*HUSH_MULT+ (int)key[i];
+  return h%BUCKET_COUNT;
+}
+
+/**
+*This function associates the value 'value' using the key 'key'. Two cases
+↪ to consider.
+Case I: The key does not already exists in the HashTable. Then you should
+create a struct Binding with key 'key' and value 'value', hash the key
+and insert the binding into the table using the hash value of the key.
+The function then should return true.
+
+Case II: The key already exists in the HashTable. Then you should update
+the Bindings old value to the new supplied 'value'. The function should
+return false.
+*/
+bool add(HashTable* table, const char* key, int value){
+  unsigned int index = hash(key);
+  Binding *binding =(Binding*) malloc(sizeof(Binding));
+  if(binding == NULL)
+    printf("Error: No memory allocated for binding!");
+  binding->key = key;
+  binding->value = value;
+  binding->next = NULL;
+  if (table->buckets[index] == NULL ){
+
+    table->buckets[index] = binding;
+    return 1;
+  }
+  else{
+    Binding *temp = table->buckets[index];
+
+
+   while (temp->next != NULL){
+     if (strcmp(temp->key,key)==0) {
+       temp->value = value;
+       return 0;
+     }
+
+      temp = temp->next;
+    }
+    temp->next = binding;
+
+   return 0;
+  }
+}
+/**
+* This function should search for the key 'key' in the HashTable and return
+the Binding if it finds one with the key. Otherwise it should return
+null.
+↪ ↪
+*/
+
+Binding *find(HashTable* table, const char* key){
+  int index = hash(key);
+  if(table->buckets[index] != NULL){
+    if (strcmp(table->buckets[index]->key, key)==0)
+      return table->buckets[index];
+    return NULL;
+  }
+  return NULL;
+}
+
+/**
+* This function should try to remove a binding with key 'key' from the
+HashTable. It should return true if it was able to remove/delete the
+binding otherwise it should return false.
+
+Hint: Be sure not to leak any dynamically allocated memory for the deleted
+binding, you should remember to free any dynamically allocated memory
+for the binding.
+*/
+bool remove(HashTable* table, const char* key){
+  unsigned int index= hash(key);
+  if (table->buckets[index] != NULL){
+    Binding *binding = table->buckets[index];
+    if (strcmp(binding->key,key)==0){
+      table->buckets[index] = binding->next;
+      free(binding);
+      return 1;
+    }
+    else{
+      while (binding->next != NULL) {
+  	if (strcmp(binding->next->key, key)==0) {
+	  binding->next = binding->next->next;
+	  free(binding->next);
+	  return 1;
+	}
+	binding = binding->next;
+     }
+	return 0;
+    }
+
+    }
+
+}
+
+/**
+* This should free all dynamically allocated memory for the HashTable
+↪ 'table'.
+Hint: You might want to traverse the bindings and free them too.
+*/
+void delete_table(HashTable* table){
+
+  for(int i = 0; i < BUCKET_COUNT;i++) {
+    Binding *binding = table->buckets[i];
+    if(binding != NULL){
+      while (binding->next != NULL){
+	free(binding);
+	binding = binding->next;
+      }
+    }
+  }
+  free(table);
+}
